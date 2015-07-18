@@ -55,11 +55,10 @@ public class Main extends AbstractWindow {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         
         // Load shaders and create shader program
-        String path = "D:\\Programs\\workspace\\opengl\\Test\\src\\resources";
-        Shader vertexShader = new Shader();
-        Shader fragmentShader = new Shader();
-        vertexShader.loadShader(path + "\\shader.vert", GL_VERTEX_SHADER);
-        fragmentShader.loadShader(path + "\\shader.frag", GL_FRAGMENT_SHADER);
+        Shader vertexShader = new Shader("/shader.vert", GL_VERTEX_SHADER);
+        Shader fragmentShader = new Shader("/shader.frag", GL_FRAGMENT_SHADER);
+        vertexShader.loadShader();
+        fragmentShader.loadShader();
         
         program = new ShaderProgram();
         program.createProgram();
