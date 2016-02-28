@@ -1,30 +1,14 @@
 package cz.lmaky.lwjgl.game;
 
-import static org.lwjgl.glfw.Callbacks.errorCallbackPrint;
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
-import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
-import static org.lwjgl.glfw.GLFW.GLFW_SAMPLES;
-import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
-import static org.lwjgl.glfw.GLFW.glfwInit;
-import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
-import static org.lwjgl.glfw.GLFW.glfwPollEvents;
-import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
-import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
-import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
-import static org.lwjgl.glfw.GLFW.glfwTerminate;
-import static org.lwjgl.glfw.GLFW.glfwWindowHint;
-import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
+import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
+
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
-import org.lwjgl.opengl.GLContext;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
@@ -40,7 +24,8 @@ public abstract class AbstractWindow {
     // We need to strongly reference callback instances.
     private GLFWErrorCallback errorCallback;
     private GLFWKeyCallback keyCallback;
-    
+    private GLFWCursorPosCallback cursorPosCallback;
+
      // The window handle
     private long window;
 
@@ -51,14 +36,15 @@ public abstract class AbstractWindow {
     protected String title = TITLE;
     
     protected abstract void initContent();
-    protected abstract void render();
+    protected abstract void loop(long window);
     protected abstract GLFWKeyCallback createKeyCallback();
- 
+    protected abstract GLFWCursorPosCallback createCursorPosCallback();
+
     public void run() {
         try {
             initWindow();
             initContent();
-            loop();
+            loop(window);
  
             // Release window and window callbacks
             glfwDestroyWindow(window);
@@ -73,7 +59,7 @@ public abstract class AbstractWindow {
     private void initWindow() {
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
-        errorCallback = errorCallbackPrint(System.err);
+        errorCallback = GLFWErrorCallback.createPrint(System.err);
         glfwSetErrorCallback(errorCallback);
  
         // Initialize GLFW. Most GLFW functions will not work before doing this.
@@ -87,7 +73,8 @@ public abstract class AbstractWindow {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+        glfwWindowHint(GLFW_VISIBLE, GL_FALSE); // the window will stay hidden after creation
         
         // Create the window
         window = glfwCreateWindow(width, height, title, NULL, NULL);
@@ -97,29 +84,25 @@ public abstract class AbstractWindow {
         
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         keyCallback = createKeyCallback();
-                
-             
              
         glfwSetKeyCallback(window, keyCallback);
 
+        cursorPosCallback = createCursorPosCallback();
+        glfwSetCursorPosCallback(window, cursorPosCallback);
+
+        GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        // Center our window
+        glfwSetWindowPos(
+                window,
+                (vidmode.getWidth() - width) / 2,
+                (vidmode.getHeight() - height) / 2
+        );
+
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
-        GLContext.createFromCurrent();
-
         // Enable v-sync
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
+        glfwShowWindow(window);
+        GL.createCapabilities();
     }
- 
-    private void loop() {
-        while (glfwWindowShouldClose(window) == GL_FALSE) {
-            render();
-
-            // Poll the events and swap the buffers
-            glfwPollEvents();
-            glfwSwapBuffers(window);
-        }
-        // Dispose the game
-        program.deleteProgram();
-    }
-
 }

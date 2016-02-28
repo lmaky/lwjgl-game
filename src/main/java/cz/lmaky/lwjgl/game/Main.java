@@ -1,58 +1,50 @@
 package cz.lmaky.lwjgl.game;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import cz.lmaky.lwjgl.game.objects.GraphicsObject;
+import cz.lmaky.lwjgl.game.objects.Triangle;
+import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
-import static org.lwjgl.glfw.GLFW.*;
+
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
+
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
 
 /**
  *
  * @author Lmaky
  */
 public class Main extends AbstractWindow {
-    
-    int uiVBO[] = new int[4];
-    int uiVAO[] = new int[2];
-    
-    static final float[] TRIANGLE_VERTS = {
-        -0.4f, 0.1f, 0.0f,
-        0.4f, 0.1f, 0.0f,
-        0.0f, 0.7f, 0.0f
-    };
-    static final float[] TRIANGLE_COLOR = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
-    };
 
-    static final float[] QUAD_VERTS = {
-        -0.2f, -0.1f, 0.0f,
-        -0.2f, -0.6f, 0.0f,
-        0.2f, -0.1f, 0.0f,
-        0.2f, -0.6f, 0.0f
-    };
-    
-    static final float[] QUAD_COLOR = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f, 0.0f
-    };
+    // Mouse positions
+    private int mouseOldX = 0;
+    private int mouseOldY = 0;
+    private int mouseX = 90;
+    private int mouseY = 0;
+
+    private List<GraphicsObject> objects = new ArrayList<>();
+
+    private Camera camera;
+
+    private FloatBuffer fb = BufferUtils.createFloatBuffer(16);
     
     public Main() {
-        width = 800;
-        height = 600;
+        width = 1600;
+        height = 900;
         title = "Game";
     }
 
     @Override
     protected void initContent() {
         // Set the clear color
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
         
         // Load shaders and create shader program
         Shader vertexShader = new Shader("/shader.vert", GL_VERTEX_SHADER);
@@ -65,65 +57,52 @@ public class Main extends AbstractWindow {
         program.addShader(vertexShader);
         program.addShader(fragmentShader);
         program.linkProgram();
-
-        uiVBO[0] = glGenBuffers();
-        uiVBO[1] = glGenBuffers();
-        uiVBO[2] = glGenBuffers();
-        uiVBO[3] = glGenBuffers();
-        
-        uiVAO[0] = glGenVertexArrays();
-        uiVAO[1] = glGenVertexArrays();
-        
-        // Setup whole triangle
-        glBindVertexArray(uiVAO[0]);
-
-        FloatBuffer triangleVertsBuffer = BufferUtils.createFloatBuffer(TRIANGLE_VERTS.length);
-        triangleVertsBuffer.put(TRIANGLE_VERTS).flip();
-        glBindBuffer(GL_ARRAY_BUFFER, uiVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, triangleVertsBuffer, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-
-        FloatBuffer triangleColorBuffer = BufferUtils.createFloatBuffer(TRIANGLE_COLOR.length);
-        triangleColorBuffer.put(TRIANGLE_COLOR).flip();
-        glBindBuffer(GL_ARRAY_BUFFER, uiVBO[1]); 
-        glBufferData(GL_ARRAY_BUFFER, triangleColorBuffer, GL_STATIC_DRAW); 
-        glEnableVertexAttribArray(1); 
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0); 
-        
-        // Setup whole quad
-        glBindVertexArray(uiVAO[1]);
-        
-        FloatBuffer quadVertsBuffer = BufferUtils.createFloatBuffer(QUAD_VERTS.length);
-        quadVertsBuffer.put(QUAD_VERTS).flip();
-        glBindBuffer(GL_ARRAY_BUFFER, uiVBO[2]); 
-        glBufferData(GL_ARRAY_BUFFER, quadVertsBuffer, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0); 
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0); 
-        
-        
-        FloatBuffer quadColorBuffer = BufferUtils.createFloatBuffer(QUAD_COLOR.length);
-        quadColorBuffer.put(QUAD_COLOR).flip();
-        glBindBuffer(GL_ARRAY_BUFFER, uiVBO[3]); 
-        glBufferData(GL_ARRAY_BUFFER, quadColorBuffer, GL_STATIC_DRAW); 
-        glEnableVertexAttribArray(1); 
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-    }
-    
-    @Override
-    protected void render() {
-        // Clear the screen
-        glClear(GL_COLOR_BUFFER_BIT);
-        // Use our program
         program.bindProgram();
-        
-        glBindVertexArray(uiVAO[0]);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glBindVertexArray(uiVAO[1]);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        // Un-bind our program
-        ShaderProgram.unbind();
+        objects.add(new Triangle());
+
+        for (GraphicsObject graphicsObject : objects) {
+            graphicsObject.init();
+        }
+
+        camera = new Camera(width, height);
+
+
+        /* Enable blending */
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+        glEnable(GL_DEPTH_TEST);
+        glClearDepth(1.0);
+    }
+
+    @Override
+    protected void loop(long window) {
+        while (glfwWindowShouldClose(window) == GL_FALSE) {
+            // Clear the screen
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            int uniModel = glGetUniformLocation(program.getProgramID(), "modelMatrix");
+            int uniView = glGetUniformLocation(program.getProgramID(), "viewMatrix");
+            int uniProjection = glGetUniformLocation(program.getProgramID(), "projectionMatrix");
+
+            Matrix4f view = camera.getViewMatrix();
+            glUniformMatrix4fv(uniView, false, view.get(fb));
+
+            Matrix4f projection = camera.getProjectionMatrix();
+            glUniformMatrix4fv(uniProjection, false, projection.get(fb));
+
+            for (GraphicsObject graphicsObject : objects) {
+                graphicsObject.render(uniModel);
+            }
+
+            glfwSwapBuffers(window);
+            // Poll the events and swap the buffers
+            glfwPollEvents();
+        }
+        // Dispose the game
+        program.deleteProgram();
     }
     
     @Override
@@ -131,16 +110,25 @@ public class Main extends AbstractWindow {
         return new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-                    glfwSetWindowShouldClose(window, GL_TRUE); // We will detect this in our rendering loop
-               }
+                if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_PRESS) {
+                    GLFW.glfwSetWindowShouldClose(window, GL_TRUE); // We will detect this in our rendering loop
+                }
             }
         };
     }
-    
-    public static void main(String[] args) {
-        new Main().run();
+
+    @Override
+    protected GLFWCursorPosCallback createCursorPosCallback() {
+        return new GLFWCursorPosCallback() {
+            @Override
+            public void invoke(long window, double xpos, double ypos) {
+                camera.updateMousePos(xpos, ypos);
+                glfwSetCursorPos(window, width/2, height/2);
+            }
+        };
     }
 
-    
+    public static void main(String[] args) {
+        (new Main()).run();
+    }
 }

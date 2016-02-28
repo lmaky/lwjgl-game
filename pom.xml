@@ -10,13 +10,18 @@
 
     <repositories>
         <repository>
-            <id>snapshots-repo</id>
+            <id>releases-repo</id>
             <url>https://oss.sonatype.org/content/repositories/releases</url>
+        </repository>
+        <repository>
+            <id>snapshots-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
     </repositories>
 
     <properties>
-        <lwjgl.version>3.0.0a</lwjgl.version>
+        <!--<lwjgl.version>3.0.0a</lwjgl.version>-->
+        <lwjgl.version>3.0.0b-SNAPSHOT</lwjgl.version>
         <main.class>cz.lmaky.lwjgl.game.Main</main.class>
     </properties>
     
@@ -80,6 +85,11 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>org.joml</groupId>
+            <artifactId>joml</artifactId>
+            <version>1.6.5</version>
+        </dependency>
         <dependency>
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl</artifactId>
