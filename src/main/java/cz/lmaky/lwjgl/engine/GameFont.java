@@ -36,7 +36,7 @@ public class GameFont {
         int imageWidth = 0;
         int imageHeight = 0;
 
-        boolean antiAlias = true;
+        boolean antiAlias = false;
 
         /* Start at char #32, because ASCII 0 to 31 are just control codes */
         for (int i = 32; i < 256; i++) {
@@ -44,35 +44,38 @@ public class GameFont {
                 continue;
             }
             char c = (char) i;
-            BufferedImage charImage = createCharImage(font, c, antiAlias);
+            CharImage charImage = createCharImage(font, imageWidth, c, antiAlias);
             if (charImage == null) {
                 /* If char image is null that font does not contain the char */
                 continue;
             }
 
-            int charWidth = charImage.getWidth();
-            int charHeight = charImage.getHeight();
-
             /* Create glyph and draw char on image */
-            Glyph ch = new Glyph(imageWidth, 0, charWidth, charHeight);
-            charImages.put(c, new CharImage(charImage, ch));
-            imageWidth += charWidth;
-            imageHeight = Math.max(imageHeight, charHeight);
+            charImages.put(c, charImage);
+            imageWidth += charImage.getWidth();
+            imageHeight = Math.max(imageHeight, charImage.getHeight());
         }
 
-        BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB_PRE);
 
         Graphics2D g = image.createGraphics();
 
-        g.clearRect(0, 0, imageWidth, imageHeight);
+        if (antiAlias) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        }
+        g.setFont(font);
+        g.setPaint(Color.WHITE);
 
         /* Create BufferedImage from all character images */
         for (Map.Entry<Character, CharImage> entry : charImages.entrySet()) {
-            BufferedImage charImage = entry.getValue().getCharImage();
-            Glyph glyph = entry.getValue().getGlyph();
-            g.drawImage(charImage, glyph.getX() , 0, null);
+
+            CharImage charImage = entry.getValue();
+            Glyph glyph = charImage.getGlyph();
+
+            g.drawString(String.valueOf(entry.getKey()), glyph.getX(), charImage.getAscent());
             glyphs.put(entry.getKey(), glyph);
         }
+        g.dispose();
 
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             PngEncoder encoder = new PngEncoder();
@@ -84,7 +87,7 @@ public class GameFont {
         }
     }
 
-    private BufferedImage createCharImage(Font font, char c, boolean antiAlias) {
+    private CharImage createCharImage(Font font, int imagePosition, char c, boolean antiAlias) {
         /* Creating temporary image to extract character size */
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
@@ -104,22 +107,9 @@ public class GameFont {
             return null;
         }
 
-        /* Create image for holding the char */
-        image = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_INT_ARGB);
-        g = image.createGraphics();
-        if (antiAlias) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        }
-        g.setFont(font);
-        g.setPaint(Color.WHITE);
-//        g.setPaint(Color.black);
-        g.drawString(String.valueOf(c), 0, metrics.getAscent());
-        g.dispose();
-        return image;
-    }
-
-    public Texture getFontTexture() {
-        return fontTexture;
+        /* Create glyph and CharImage */
+        Glyph glyph = new Glyph(imagePosition, 0, charWidth, charHeight);
+        return new CharImage(glyph, charWidth, charHeight, metrics.getAscent());
     }
 
     public float getFontTextureWidth() {
