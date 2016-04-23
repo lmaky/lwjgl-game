@@ -5,9 +5,11 @@ uniform mat4 modelMatrix;
 uniform mat4 viewMatrix; 
 
 layout (location = 0) in vec3 inPosition;
-layout (location = 1) in vec3 inColor;
+layout (location = 1) in vec2 inColor;
+//layout (location = 1) in vec3 inColor;
 
-smooth out vec3 theColor;
+smooth out vec2 theColor;
+//smooth out vec3 theColor;
 
 void main()
 {

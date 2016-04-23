@@ -1,13 +1,10 @@
-package cz.lmaky.lwjgl.game;
+package cz.lmaky.lwjgl.engine;
 
+import cz.lmaky.lwjgl.engine.utils.ResourceUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 
 /**
  *
@@ -42,28 +39,19 @@ public class Shader {
     }
     
     public boolean loadShader() {
-        
-        InputStream is = this.getClass().getResourceAsStream(resource);
-
-        // Get all lines from a file
-        StringBuilder shaderCode = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-               shaderCode.append(line).append("\n");
-            }
+        String resourceAsString;
+        try {
+            resourceAsString = ResourceUtils.getResourceAsString(resource);
         } catch (IOException ex) {
-            System.err.println("error: " + ex.getMessage());
+            System.err.println("Error while read file " + resource);
             return false;
         }
-        
-        shaderID = GL20.glCreateShader(shaderType);
 
-        GL20.glShaderSource(shaderID, shaderCode);
+        shaderID = GL20.glCreateShader(shaderType);
+        GL20.glShaderSource(shaderID, resourceAsString);
         GL20.glCompileShader(shaderID);
         
         int result = GL20.glGetShaderi(shaderID, GL20.GL_COMPILE_STATUS);
-
         if (result == GL11.GL_FALSE) {
             return false;
         }

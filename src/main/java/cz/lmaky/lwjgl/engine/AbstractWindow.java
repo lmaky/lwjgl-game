@@ -1,4 +1,4 @@
-package cz.lmaky.lwjgl.game;
+package cz.lmaky.lwjgl.engine;
 
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -29,8 +29,6 @@ public abstract class AbstractWindow {
      // The window handle
     private long window;
 
-    protected ShaderProgram program;
- 
     protected int width = WIDTH;
     protected int height = HEIGHT;
     protected String title = TITLE;
@@ -94,14 +92,14 @@ public abstract class AbstractWindow {
         // Center our window
         glfwSetWindowPos(
                 window,
-                (vidmode.getWidth() - width) / 2,
-                (vidmode.getHeight() - height) / 2
+                (vidmode.width() - width) / 2,
+                (vidmode.height()- height) / 2
         );
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync
-        glfwSwapInterval(0);
+        glfwSwapInterval(1);
         glfwShowWindow(window);
         GL.createCapabilities();
     }

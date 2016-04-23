@@ -1,4 +1,4 @@
-package cz.lmaky.lwjgl.game;
+package cz.lmaky.lwjgl.engine;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -23,7 +23,7 @@ public class Camera {
     private float verticalAngle = 0.0f;
 
     // Initial Field of View
-    private float initialFoV = 45.0f;
+    private float initialFoV = 45f;
 
     private float speed = 3.0f; // 3 units / second
 
@@ -55,7 +55,7 @@ public class Camera {
         direction.set(x, y, z);
         direction.add(position);
         view.identity();
-        view.setLookAt(position, direction, up);
+//        view.setLookAt(position, direction, up);
 
         lastTime = time;
         return view;

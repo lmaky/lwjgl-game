@@ -1,5 +1,6 @@
-package cz.lmaky.lwjgl.game.objects;
+package cz.lmaky.lwjgl.engine.objects.impl;
 
+import cz.lmaky.lwjgl.engine.objects.GraphicsObject;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
