@@ -8,26 +8,59 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.awt.Font.TRUETYPE_FONT;
 
 /**
  * @author lukas.marek
  */
 public class GameFont {
 
-    Map<Character, Glyph> glyphs = new HashMap<>();
+    private Map<Character, Glyph> glyphs = new HashMap<>();
 
     private Texture fontTexture;
 
+    public GameFont(String fontName, float size) {
+        Font font;
+        try {
+            InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fontName);
+            font = Font.createFont(TRUETYPE_FONT, inputStream).deriveFont(size);
+        } catch (IOException | FontFormatException e) {
+            throw new IllegalStateException("Font is not loaded.", e);
+        }
+        generateFontTexture(font);
+    }
+
     public GameFont(Font font) {
         generateFontTexture(font);
+    }
+
+    public float getFontTextureWidth() {
+        if (fontTexture == null) {
+            throw new IllegalStateException("Texture is null.");
+        }
+        return fontTexture.getTextureWidth();
+    }
+
+    public int getFontTextureId() {
+        if (fontTexture == null) {
+            throw new IllegalStateException("Texture is null.");
+        }
+        return fontTexture.getTextureId();
+    }
+
+    public Map<Character, Glyph> getGlyphs() {
+        return glyphs;
     }
 
     private void generateFontTexture(Font font) {
@@ -110,23 +143,5 @@ public class GameFont {
         /* Create glyph and CharImage */
         Glyph glyph = new Glyph(imagePosition, 0, charWidth, charHeight);
         return new CharImage(glyph, charWidth, charHeight, metrics.getAscent());
-    }
-
-    public float getFontTextureWidth() {
-        if (fontTexture == null) {
-            throw new IllegalStateException("Texture is null.");
-        }
-        return fontTexture.getTextureWidth();
-    }
-
-    public int getFontTextureId() {
-        if (fontTexture == null) {
-            throw new IllegalStateException("Texture is null.");
-        }
-        return fontTexture.getTextureId();
-    }
-
-    public Map<Character, Glyph> getGlyphs() {
-        return glyphs;
     }
 }

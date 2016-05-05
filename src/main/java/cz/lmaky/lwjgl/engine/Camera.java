@@ -46,8 +46,8 @@ public class Camera {
     }
 
     public Matrix4f getViewMatrix() {
-        double time = GLFW.glfwGetTime();
-        float deltaTime = (float)(time - lastTime);
+//        double time = GLFW.glfwGetTime();
+//        float deltaTime = (float)(time - lastTime);
 
         float x = (float) Math.sin(Math.toRadians(horizontalAngle)) * (float) Math.cos(Math.toRadians(verticalAngle));
         float y = (float) Math.sin(Math.toRadians(verticalAngle));
@@ -57,7 +57,7 @@ public class Camera {
         view.identity();
 //        view.setLookAt(position, direction, up);
 
-        lastTime = time;
+//        lastTime = time;
         return view;
     }
 

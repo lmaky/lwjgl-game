@@ -1,33 +1,21 @@
 package cz.lmaky.lwjgl.game;
 
-
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.io.IOException;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import cz.lmaky.lwjgl.engine.AbstractWindow;
 import cz.lmaky.lwjgl.engine.Camera;
-import cz.lmaky.lwjgl.engine.Shader;
 import cz.lmaky.lwjgl.engine.ShaderProgram;
 import cz.lmaky.lwjgl.engine.GameFont;
 import cz.lmaky.lwjgl.engine.objects.GraphicsObject;
 import cz.lmaky.lwjgl.engine.objects.impl.Text;
 import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
+import org.joml.Vector3f;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
-
-import static java.awt.Font.PLAIN;
-import static java.awt.Font.SANS_SERIF;
-import static java.awt.Font.TRUETYPE_FONT;
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL20.*;
+import org.lwjgl.opengl.GL11;
 
 /**
  *
@@ -41,17 +29,14 @@ public class Main extends AbstractWindow {
     private int mouseX = 90;
     private int mouseY = 0;
 
-//    protected ShaderProgram program;
-
+    protected ShaderProgram program;
     protected ShaderProgram hudProgram;
 
-//    private List<GraphicsObject> objects = new ArrayList<>();
+    private List<GraphicsObject> objects = new ArrayList<>();
     private List<GraphicsObject> hudObjects = new ArrayList<>();
 
     private Camera camera;
 
-    private FloatBuffer fb = BufferUtils.createFloatBuffer(16);
-    
     public Main() {
         width = 1600;
         height = 900;
@@ -61,73 +46,64 @@ public class Main extends AbstractWindow {
     @Override
     protected void initContent() {
         // Set the clear color
-        glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
+        GL11.glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
         
-        // Load shaders and create shader program
-//        Shader vertexShader = new Shader("shader.vert", GL_VERTEX_SHADER);
-//        Shader fragmentShader = new Shader("shader.frag", GL_FRAGMENT_SHADER);
-//        vertexShader.loadShader();
-//        fragmentShader.loadShader();
-//
-//        program = new ShaderProgram();
-//        program.createProgram();
-//        program.addShader(vertexShader);
-//        program.addShader(fragmentShader);
-//        program.linkProgram();
-//        program.bindProgram();
+        //Load shaders and create shader program
+        program = new ShaderProgram();
+        program.createVertexShader("shader.vert");
+        program.createFragmentShader("shader.frag");
+        program.linkProgram();
+
+        program.createUniform("modelMatrix");
+        program.createUniform("viewMatrix");
+        program.createUniform("projectionMatrix");
+        program.createUniform("texture_sampler");
 
         // Load shaders and create shader program
-        Shader hudVertexShader = new Shader("hud-shader.vert", GL_VERTEX_SHADER);
-        Shader hudFragmentShader = new Shader("hud-shader.frag", GL_FRAGMENT_SHADER);
-        hudVertexShader.loadShader();
-        hudFragmentShader.loadShader();
-
         hudProgram = new ShaderProgram();
-        hudProgram.createProgram();
-        hudProgram.addShader(hudVertexShader);
-        hudProgram.addShader(hudFragmentShader);
+        hudProgram.createVertexShader("hud-shader.vert");
+        hudProgram.createFragmentShader("hud-shader.frag");
         hudProgram.linkProgram();
-        hudProgram.bindProgram();
+
+        hudProgram.createUniform("projectionMatrix");
+        hudProgram.createUniform("modelMatrix");
+        hudProgram.createUniform("colour");
+        hudProgram.createUniform("texture_sampler");
 
 //        objects.add(new Triangle());
-//        objects.add(new Cube());
+        objects.add(new Cube());
 
-        GameFont gameFont = null;
-//        gameFont = new GameFont(new Font(SANS_SERIF, PLAIN, 62));
-        try {
-            String fontName = "font/kenpixel.ttf";
-//            String fontName = "font/SnackerComic_PerosnalUseOnly.ttf";
-            gameFont = new GameFont(Font.createFont(TRUETYPE_FONT, Thread.currentThread().getContextClassLoader().getResourceAsStream(fontName)).deriveFont(52.0f));
-        } catch (IOException | FontFormatException e) {
-            e.printStackTrace();
-        }
+        String fontName = "font/kenpixel.ttf";
+//        String fontName = "font/SnackerComic_PerosnalUseOnly.ttf";
+
+//        GameFont gameFont = new GameFont(new Font(SANS_SERIF, PLAIN, 62));
+        GameFont gameFont = new GameFont(fontName, 52);
         hudObjects.add(new Text(gameFont, "Test!"));
 
-//        for (GraphicsObject graphicsObject : objects) {
-//            graphicsObject.init();
-//        }
+        for (GraphicsObject graphicsObject : objects) {
+            graphicsObject.init();
+        }
 
         for (GraphicsObject graphicsObject : hudObjects) {
             graphicsObject.init();
         }
 
-//        camera = new Camera(width, height);
-
+        camera = new Camera(width, height);
 
         /* Enable blending */
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 //        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-        glEnable(GL_DEPTH_TEST);
-        glClearDepth(1.0);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glClearDepth(1.0);
     }
 
     @Override
     protected void loop(long window) {
 //        double lastTime = glfwGetTime();
 //        int nbFrames = 0;
-        while (glfwWindowShouldClose(window) == GL_FALSE) {
+        while (GLFW.glfwWindowShouldClose(window) == GLFW.GLFW_FALSE) {
 
 //            double currentTime = glfwGetTime();
 //            nbFrames++;
@@ -137,74 +113,40 @@ public class Main extends AbstractWindow {
 //                lastTime = currentTime;
 //            }
             // Clear the screen
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
-//            int uniModel = glGetUniformLocation(program.getProgramID(), "modelMatrix");
-//            int uniView = glGetUniformLocation(program.getProgramID(), "viewMatrix");
-//            int uniProjection = glGetUniformLocation(program.getProgramID(), "projectionMatrix");
-//
-//            Matrix4f view = camera.getViewMatrix();
-//            glUniformMatrix4fv(uniView, false, view.get(fb));
-//
-//            Matrix4f projection = camera.getProjectionMatrix();
-//            glUniformMatrix4fv(uniProjection, false, projection.get(fb));
-//
-//
-//            int textureSampler = glGetUniformLocation(program.getProgramID(), "texture_sampler");
-//            glUniform1i(textureSampler, 0);
-//
-//
-//            for (GraphicsObject graphicsObject : objects) {
-//                graphicsObject.render(uniModel);
-//            }
+            program.bind();
 
+            program.setUniform("viewMatrix", camera.getViewMatrix());
+            program.setUniform("projectionMatrix", camera.getProjectionMatrix());
 
-            //hud
+            program.setUniform("texture_sampler", 0);
 
-
-            /////////////////
-//            Matrix4f ortho = transformation.getOrthoProjectionMatrix(0, window.getWidth(), window.getHeight(), 0);
-//            for (GameItem gameItem : hud.getGameItems()) {
-//                Mesh mesh = gameItem.getMesh();
-//                // Set ortohtaphic and model matrix for this HUD item
-//                Matrix4f projModelMatrix = transformation.getOrtoProjModelMatrix(gameItem, ortho);
-//                hudShaderProgram.setUniform("projModelMatrix", projModelMatrix);
-//                hudShaderProgram.setUniform("colour", gameItem.getMesh().getMaterial().getColour());
-//
-//                // Render the mesh for this HUD item
-//                mesh.render();
-//            }
-            /////////////////
-
-            int projModel = glGetUniformLocation(hudProgram.getProgramID(), "projModelMatrix");
-
-            Matrix4f projModelMatrix = new Matrix4f();
-//            projModelMatrix = projModelMatrix.ortho2D(-10, 10, -10, 10);
-//            projModelMatrix = projModelMatrix.ortho2D(0.0f , width, height, 0.0f);
-            projModelMatrix = projModelMatrix.ortho2D(0.0f , width, height, 0.0f);
-//            projModelMatrix = projModelMatrix.ortdho2D(10, 10, 10, 10);
-//            projModelMatrix = projModelMatrix.ortho(10, 10, 10, 10, -100, 100);
-//            projModelMatrix.perspective(45f, (float)width/height, 0.1f, 100f);
-            glUniformMatrix4fv(projModel, false, projModelMatrix.get(fb));
-
-            int color = glGetUniformLocation(hudProgram.getProgramID(), "colour");
-            glUniform3f(color, 0.0f, 1.0f, 0.0f);
-
-            int hudTextureSampler = glGetUniformLocation(hudProgram.getProgramID(), "texture_sampler");
-            glUniform1i(hudTextureSampler, 0);
-
-
-            for (GraphicsObject graphicsObject : hudObjects) {
-                graphicsObject.render(projModel);
+            for (GraphicsObject graphicsObject : objects) {
+                program.setUniform("modelMatrix", graphicsObject.getModelMatrix());
+                graphicsObject.render();
             }
 
+            //HUD
+            hudProgram.bind();
 
-            glfwSwapBuffers(window);
+            hudProgram.setUniform("colour", new Vector3f(0.0f, 1.0f, 0.0f));
+            hudProgram.setUniform("texture_sampler", 0);
+
+            Matrix4f projectionMatrix = (new Matrix4f()).ortho2D(0.0f , width, height, 0.0f);
+            hudProgram.setUniform("projectionMatrix", projectionMatrix);
+
+            for (GraphicsObject graphicsObject : hudObjects) {
+                hudProgram.setUniform("modelMatrix", graphicsObject.getModelMatrix());
+                graphicsObject.render();
+            }
+
             // Poll the events and swap the buffers
-            glfwPollEvents();
+            GLFW.glfwSwapBuffers(window);
+            GLFW.glfwPollEvents();
         }
         // Dispose the game
-//        program.deleteProgram();
+        program.deleteProgram();
         hudProgram.deleteProgram();
     }
     
@@ -214,7 +156,7 @@ public class Main extends AbstractWindow {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_PRESS) {
-                    GLFW.glfwSetWindowShouldClose(window, GL_TRUE); // We will detect this in our rendering loop
+                    GLFW.glfwSetWindowShouldClose(window, GL11.GL_TRUE); // We will detect this in our rendering loop
                 }
             }
         };
@@ -233,8 +175,5 @@ public class Main extends AbstractWindow {
 
     public static void main(String[] args) {
         (new Main()).run();
-//        (new Main2()).run();
-//        (new Main3()).run();
-//        new FontDemo(36, "asdas dasd as").run();
     }
 }

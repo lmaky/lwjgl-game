@@ -47,4 +47,8 @@ public class TextureUtils {
 
         return newTextureId;
     }
+
+    public static int loadTexture(String name) {
+        return loadTexture(Thread.currentThread().getContextClassLoader().getResourceAsStream(name));
+    }
 }

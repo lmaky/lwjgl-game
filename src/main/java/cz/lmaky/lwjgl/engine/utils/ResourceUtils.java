@@ -39,15 +39,14 @@ public final class ResourceUtils {
      * @return the resource data
      * @throws IOException if an IO error occurs
      */
-    public static String getResourceAsString(String resource) throws IOException {
+    public static String getResourceAsString(String resource) {
         String buffer = null;
         try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource)) {
             if (is != null) {
                 buffer = IOUtils.toString(is);
             }
-        }
-        if (buffer == null) {
-            throw new IOException("Data is null.");
+        } catch (IOException e) {
+            throw new IllegalStateException("Error while loading resource -" + resource + ".", e);
         }
         return buffer;
     }
